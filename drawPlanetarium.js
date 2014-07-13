@@ -1,4 +1,4 @@
-var fps = 30;
+var fps = 60;
 
 // planetary orbital elements from wikipedia
 // at scale 1:
@@ -24,10 +24,10 @@ var data = {
     r: 6371
   },
   moon: {
-    a: 0.03,
+    a: Math.pow(27.3/365.25, 2/3),
     e: 0.0549,
-    w: 0, // ?
-    r: 1737
+    w: 0, // (?) varies significantly with time and is not clearly defined in any fixed reference frame
+    r: 2000
   },
   mars: {
     a: 1.524,
@@ -37,32 +37,62 @@ var data = {
   }
 }
 
+// some optimization shim thingy (http://www.paulirish.com/2011/requestanimationframe-for-smart-animating/)
+window.requestAnimFrame = (function(){
+  return  window.requestAnimationFrame       ||
+          window.webkitRequestAnimationFrame ||
+          window.mozRequestAnimationFrame    ||
+          function( callback ){ // fallback
+            window.setTimeout(callback, 1000 / 60);
+          };
+})();
+
+function prerender(imgSrc, w, h) {
+  var imgCanvas = document.createElement("canvas");
+  imgCanvas.width = w;
+  imgCanvas.height = h;
+  var imgCanvasCtx = imgCanvas.getContext("2d");
+  var imgObj = new Image();
+  imgObj.onload = function() {
+    imgCanvasCtx.drawImage(imgObj, 0, 0);
+  }
+  imgObj.src = imgSrc;
+  return imgCanvas;
+}
+
 var orbits = document.getElementById("orbits");
 var planets = document.getElementById("planets");
+var imageCanvasesLoaded = false;
 
-if (orbits.getContext && planets.getContext) {
+// pre-render everything possible for better performance
+if (orbits.getContext) { // let's just assume that it will work for the others too...
   var orbitsCtx = orbits.getContext("2d");
   var planetsCtx = planets.getContext("2d");
-  setInterval(function() {
-    update();
-  }, 1000/fps);
+  var sunCanvas = prerender("images/sun.jpg", 80, 77);
+  var mercuryCanvas = prerender("images/mercury.jpg", 16, 16);
+  var earthCanvas = prerender("images/earth.jpg", 16, 16);
+  var venusCanvas = prerender("images/venus.jpg", 24, 24);
+  var marsCanvas = prerender("images/mars.jpg", 24, 24);
+  var moonCanvas = prerender("images/moon.jpg", 16, 16);
+  imageCanvasesLoaded = true;
 }
 
 var width = window.innerWidth;
 var height = window.innerHeight;
+var universalScale = 2;
 
 var time = 0;
-var mercuryOrbit = new Orbit(data.mercury.a, data.mercury.e, data.mercury.w, 1, 0);
-var venusOrbit = new Orbit(data.venus.a, data.venus.e, data.venus.w, 1, 0);
-var earthOrbit = new Orbit(data.earth.a, data.earth.e, data.earth.w, 1, 0);
-var marsOrbit = new Orbit(data.mars.a, data.mars.e, data.mars.w, 1, 0);
+var mercuryOrbit = new Orbit(data.mercury.a, data.mercury.e, data.mercury.w, universalScale, 0);
+var venusOrbit = new Orbit(data.venus.a, data.venus.e, data.venus.w, universalScale, 0);
+var earthOrbit = new Orbit(data.earth.a, data.earth.e, data.earth.w, universalScale, 0);
+var marsOrbit = new Orbit(data.mars.a, data.mars.e, data.mars.w, universalScale, 0);
 
-var moonOrbit = new Orbit(data.moon.a+.1, data.moon.e, data.moon.w, 1, 0, earthOrbit);
+var moonOrbit = new Orbit(data.moon.a, data.moon.e, data.moon.w, universalScale, 0, earthOrbit);
 
-var halleyOrbit = new Orbit(17.8, .967, degToRad(20), 1, degToRad(-1));
+var halleyOrbit = new Orbit(17.8, .967, degToRad(20), universalScale, degToRad(-1));
 
 
-function update() {
+function render(univScale) {
   width = window.innerWidth;
   height = window.innerHeight;
   orbits.width = width;
@@ -74,34 +104,37 @@ function update() {
   orbitsCtx.shadowColor = "#ffea75";
   orbitsCtx.shadowOffsetX = 0;
   orbitsCtx.shadowOffsetY = 0;
-  orbitsCtx.shadowBlur = 30;
-  drawDot(polarToCanvas(0, 0), 15, orbitsCtx, "#ffd900"); // origin
+  orbitsCtx.shadowBlur = 60;
+  drawDot(polarToCanvas(0, 0), 15*univScale, orbitsCtx, null, "#ffd900"); // origin
+  drawDot(polarToCanvas(0, 0), 15*univScale, orbitsCtx, sunCanvas);//, "#ffd900"); // origin
 
   // orbits
-  mercuryOrbit.drawOrbit(orbitsCtx);
-  venusOrbit.drawOrbit(orbitsCtx);
-  earthOrbit.drawOrbit(orbitsCtx);
-  marsOrbit.drawOrbit(orbitsCtx);
-  halleyOrbit.drawOrbit(orbitsCtx);
+  mercuryOrbit.drawOrbit(orbitsCtx, univScale, null);
+  venusOrbit.drawOrbit(orbitsCtx, univScale, null);
+  earthOrbit.drawOrbit(orbitsCtx, univScale, null);
+  marsOrbit.drawOrbit(orbitsCtx, univScale, null);
+  halleyOrbit.drawOrbit(orbitsCtx, univScale, null);
 
   // planets
-  planetsCtx.clearRect(0, 0, width, height);
-  // draw planet statements here
-  mercuryOrbit.drawOrbiter(data.mercury.r/1000, time, planetsCtx);
-  venusOrbit.drawOrbiter(data.venus.r/1000, time, planetsCtx);
-  earthOrbit.drawOrbiter(data.earth.r/1000, time, planetsCtx);
-  marsOrbit.drawOrbiter(data.mars.r/1000, time, planetsCtx);
-  halleyOrbit.drawOrbiter(3, time, planetsCtx);
+  mercuryOrbit.drawOrbiter(data.mercury.r*univScale/2000, time, planetsCtx, univScale, mercuryCanvas, null);
+  venusOrbit.drawOrbiter(data.venus.r*univScale/2000, time, planetsCtx, univScale, venusCanvas, null);
+  earthOrbit.drawOrbiter(data.earth.r*univScale/2000, time, planetsCtx, univScale, earthCanvas, null);
+  marsOrbit.drawOrbiter(data.mars.r*univScale/2000, time, planetsCtx, univScale, marsCanvas, null);
+  halleyOrbit.drawOrbiter(3, time, planetsCtx, univScale, null, null);
 
   // satellites, since we need getPlanetLocation updated after everything's been drawn already
 
   var earthLocation = earthOrbit.getPlanetLocation();
-  moonOrbit.drawOrbit(orbitsCtx, earthLocation);
-  moonOrbit.drawOrbiter(data.moon.r/1000, time, planetsCtx, earthLocation);
+  moonOrbit.drawOrbit(orbitsCtx, univScale, earthLocation);
+  moonOrbit.drawOrbiter(data.moon.r*univScale/2000, time, planetsCtx, univScale, moonCanvas, earthLocation);
 
   time += 1000/fps;
 }
 
+(function animLoop() {
+  requestAnimFrame(animLoop);
+  render(0.5*Math.cos(time*Math.PI/500)+1.5);
+})();
 
 
 
@@ -158,17 +191,32 @@ function shiftOrigin(newOrigin, r, t) { // -> [r', theta']
   return [rNew, thetaNew];
 }
 
-function drawDot(center, radius, layer, color) {
+function drawDot(center, radius, layer, imageCanvas, color) {
   //[x, y], float, ctx
   // radius in pixels, center in canvas coordinates
 
-  layer.strokeStyle = (!color) ? "#00ffff" : color;
-  layer.fillStyle = (!color) ? "#00ffff" : color;
+  if (!imageCanvas) {
+    layer.strokeStyle = (!color) ? "#00ffff" : color;
+    layer.fillStyle = (!color) ? "#00ffff" : color;
 
-  layer.beginPath();
-  layer.arc(center[0], center[1], radius, 0, 2*Math.PI);
-  //layer.stroke();
-  layer.fill();
+    layer.beginPath();
+    layer.arc(center[0], center[1], radius, 0, 2*Math.PI);
+    //layer.stroke();
+    layer.fill();
+  }
+  else {
+    if (imageCanvasesLoaded) {
+      layer.save();
+
+      layer.beginPath();
+      layer.arc(center[0], center[1], radius, 0, 2*Math.PI);
+      layer.closePath();
+      layer.clip();
+      layer.drawImage(imageCanvas, center[0]-imageCanvas.width/2, center[1]-imageCanvas.height/2);
+
+      layer.restore();
+    }
+  }
 }
 
 function drawPolarEllipse(a_, e, w, scale, layer, origin, color) {
@@ -179,11 +227,11 @@ function drawPolarEllipse(a_, e, w, scale, layer, origin, color) {
   var b = a*Math.sqrt(1-e*e); // semiminor axis
   var c = a*e; // distance from center to focus
 
-  layer.strokeStyle = (!color) ? "#dddddd" : color;
+  layer.strokeStyle = (!color) ? "#555555" : color;
 
   if (!origin)
     var origin = [0,0];
-  origin = polarToCanvas(origin[0], origin[1]);
+  origin = polarToCanvas(scale*origin[0], origin[1]);
 
   // corresponding restore() at the end
   layer.save();
@@ -211,7 +259,7 @@ function drawPolarEllipse(a_, e, w, scale, layer, origin, color) {
 
 
 
-function Orbit(a, e, w, scale, angularOffset, parentObject) {
+function Orbit(a, e, w, angularOffset, parentObject) {
   // a=semimajor axis (AU), e=eccentricity (unitless), w=argument of perihelion (rad), angularOffset=true anomaly of the position at time t=0 (rad)
   // parentObject=the parent object if this is a satellite or nested orbit
   // equation: r = a(1-e^2) / (1+e*cos(theta - w))
@@ -230,12 +278,10 @@ function Orbit(a, e, w, scale, angularOffset, parentObject) {
   var r0 = a * (1-e*e) / (1+e*Math.cos(-w));
   var t0 = angularOffset;
   // starting values
-  this.r = r0;
-  this.theta = t0;
-  this.location = polarToCanvas(r0, t0, scale);
+  this.r;//= r0;
+  this.theta;// = t0;
+  this.location;// = polarToCanvas(r0, t0, universalScale);
 
-  //if (!scale)
-    //var scale = 1;
   if (!parentObject)
     var nested = false;
   else
@@ -243,7 +289,7 @@ function Orbit(a, e, w, scale, angularOffset, parentObject) {
 
   // THETA is measured from the origin at center, PHI is measured from the other focus of the ellipse
 
-  function getPhi(theta) {
+  function getPhi(theta) { // -> phi
     var R = a * (1-e*e) / (1+e*Math.cos(theta)); // measured for theta, since we want a phi angle from a given theta angle
 
     // r'
@@ -262,12 +308,12 @@ function Orbit(a, e, w, scale, angularOffset, parentObject) {
     return theta - Math.PI + 2*angleBetween;
   }
 
-  function projectEqualTimePoint(phi, origin) { // -> [r, theta]
+  function projectEqualTimePoint(phi) { // -> [r, theta]
     // cycle through phi from 0 to 2pi
     // use the approximation that we are centered at the other focus; phi is measured from here
 
-    if (!origin)
-      var origin = [0,0];
+    //if (!origin)
+      //var origin = [0,0];
 
     var r = a * (1-e*e) / (1-e*Math.cos(phi)); // facing the other direction
     var c = a*e;
@@ -276,7 +322,7 @@ function Orbit(a, e, w, scale, angularOffset, parentObject) {
       // if this is a satellite of some sort, shift origin to the parent object's location
       // graph it originally at origin, then move it to right point
       // IDK HOW THIS LINE WORKS
-      var ptOnEllipse = shiftOrigin([parentObject.r, (Math.PI-w)+parentObject.theta], r, phi-Math.PI);
+      var ptOnEllipse = shiftOrigin([parentObject.r, parentObject.theta-(w-Math.PI)], r, phi-Math.PI);
     }
     else
       // if this is not a satellite, simply shift origin 2c to the right
@@ -291,7 +337,7 @@ function Orbit(a, e, w, scale, angularOffset, parentObject) {
     return [r1, theta1+w];
   }
 
-  this.drawOrbit = function(layer, origin) {
+  this.drawOrbit = function(layer, scale, origin) {
     // draws an orbit in using origin as polar(0,0)
 
     if (!origin)
@@ -309,16 +355,16 @@ function Orbit(a, e, w, scale, angularOffset, parentObject) {
 
   }
 
-  this.drawOrbiter = function(planetRadius, time, layer, origin) {
+  this.drawOrbiter = function(planetRadius, time, layer, scale, imageCanvas, origin) {
     // orbiting object drawn as a dot of some radius (px), after some time (ms), onto some layer
-    
+
     if (!origin)
       var origin = [0,0];
 
     // Kepler 3: P^2=a^3 where P in yr, a in AU (r units)
     var period = Math.pow(a, 1.5);
 
-    // now, as in drawOrbit, loop through the angle at the other focus phi from 0 to 2pi at constant rate
+    // now, as in old drawOrbit, loop through the angle at the other focus phi from 0 to 2pi at constant rate
     
     // *** THIS LINE DETERMINES SPEED OF ANIMATIONS ***
     var yearsSinceZero = time/(1000*10); // 1 earth yr = 10 sec
@@ -327,17 +373,17 @@ function Orbit(a, e, w, scale, angularOffset, parentObject) {
     var fractionPeriodCovered = yearsSinceZero/period; // where are we in the period?
     var phi = fractionPeriodCovered*(2*Math.PI) + phiAngularOffset; // what does this translate to in terms of angle? + any starting position we may have
 
-    var planetPoint = projectEqualTimePoint(phi, origin);
+    var planetPoint = projectEqualTimePoint(phi);
+    
     var trueR = planetPoint[0];
     var trueTheta = planetPoint[1];
 
     // update the properties for reading
     this.r = trueR;
     this.theta = trueTheta;
-    this.lastLocation = this.location;
-    this.location = polarToCanvas(trueR, trueTheta, scale); // for convenience, esp with satellites and the origin shift vector
+    this.location = polarToCanvas(trueR, trueTheta, scale, origin); // for convenience, esp with satellites and the origin shift vector
 
-    drawDot(this.location, planetRadius, layer);
+    drawDot(this.location, planetRadius, layer, imageCanvas);
   }
 
   this.getPlanetLocation = function() {
