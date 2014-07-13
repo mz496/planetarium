@@ -47,6 +47,7 @@ window.requestAnimFrame = (function(){
           };
 })();
 
+// for performance
 function prerender(imgSrc, w, h) {
   var imgCanvas = document.createElement("canvas");
   imgCanvas.width = w;
@@ -59,6 +60,12 @@ function prerender(imgSrc, w, h) {
   imgObj.src = imgSrc;
   return imgCanvas;
 }
+
+
+
+
+
+// OBJECTS IN VIEW
 
 var orbits = document.getElementById("orbits");
 var planets = document.getElementById("planets");
@@ -79,7 +86,14 @@ if (orbits.getContext) { // let's just assume that it will work for the others t
 
 var width = window.innerWidth;
 var height = window.innerHeight;
-var universalScale = 2;
+
+var zoomLevel = 1; // default
+var zoomLevel1 = 2;
+var zoomLevel2 = 0.5;
+var zoomSpeed = 1000; // ms
+var zoomingIn = false;
+var zoomingOut = false;
+var universalScale = zoomLevel1;
 
 var time = 0;
 var mercuryOrbit = new Orbit(data.mercury.a, data.mercury.e, data.mercury.w, universalScale, 0);
@@ -91,7 +105,6 @@ var moonOrbit = new Orbit(data.moon.a, data.moon.e, data.moon.w, universalScale,
 
 var halleyOrbit = new Orbit(17.8, .967, degToRad(20), universalScale, degToRad(-1));
 
-
 function render(univScale) {
   width = window.innerWidth;
   height = window.innerHeight;
@@ -101,12 +114,6 @@ function render(univScale) {
   planets.height = height;
 
   orbitsCtx.fillRect(0, 0, width, height);
-  orbitsCtx.shadowColor = "#ffea75";
-  orbitsCtx.shadowOffsetX = 0;
-  orbitsCtx.shadowOffsetY = 0;
-  orbitsCtx.shadowBlur = 60;
-  drawDot(polarToCanvas(0, 0), 15*univScale, orbitsCtx, null, "#ffd900"); // origin
-  drawDot(polarToCanvas(0, 0), 15*univScale, orbitsCtx, sunCanvas);//, "#ffd900"); // origin
 
   // orbits
   mercuryOrbit.drawOrbit(orbitsCtx, univScale, null);
@@ -128,13 +135,67 @@ function render(univScale) {
   moonOrbit.drawOrbit(orbitsCtx, univScale, earthLocation);
   moonOrbit.drawOrbiter(data.moon.r*univScale/2000, time, planetsCtx, univScale, moonCanvas, earthLocation);
 
+  // sun last so that the shadows don't make other things look strange
+  orbitsCtx.shadowColor = "#ffea75";
+  orbitsCtx.shadowOffsetX = 0;
+  orbitsCtx.shadowOffsetY = 0;
+  orbitsCtx.shadowBlur = 30*univScale;
+  drawDot(polarToCanvas(0, 0), 15*univScale, orbitsCtx, null, "#ffd900"); // origin
+  drawDot(polarToCanvas(0, 0), 15*univScale, orbitsCtx, sunCanvas);//, "#ffd900"); // origin
+
   time += 1000/fps;
 }
 
+$("#toggleZoom").click(function(){
+  $("#toggleZoom").fadeOut(300, function(){
+    if (zoomLevel === 1)
+      zoomingIn = true;
+    else
+      zoomingOut = true;
+  })
+});
+
+var dt = 0;
+
+// controls animation
 (function animLoop() {
   requestAnimFrame(animLoop);
-  render(0.5*Math.cos(time*Math.PI/500)+1.5);
+
+  // measured every frame, so we update universalScale at each tick when zooming in/out
+
+  // IN
+  if (zoomingIn) {
+    universalScale = (zoomLevel1-zoomLevel2)/2 * Math.cos(dt * Math.PI/zoomSpeed) + (zoomLevel1+zoomLevel2)/2;
+    render(universalScale);
+    dt += 1000/fps;
+
+    if (dt > 1000) { // finished zooming
+      zoomLevel = 2;
+      zoomingIn = false;
+      dt = 0;
+      $("#toggleZoom").fadeIn(300);
+    }
+  }
+
+  // OUT
+  if (zoomingOut) {
+    universalScale = -(zoomLevel1-zoomLevel2)/2 * Math.cos(dt * Math.PI/zoomSpeed) + (zoomLevel1+zoomLevel2)/2;
+    render(universalScale);
+    dt += 1000/fps;
+
+    if (dt > 1000) { // finished zooming
+      zoomLevel = 1;
+      zoomingOut = false;
+      dt = 0;
+      $("#toggleZoom").fadeIn(300);
+    }
+  }
+
+  // NOTA
+  if (!zoomingIn && !zoomingOut)
+    render(universalScale);
 })();
+
 
 
 

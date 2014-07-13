@@ -13,6 +13,22 @@
         left: 0;
         top: 0;
       }
+      .button {
+        position: absolute;
+        right: 0;
+        bottom: 0;
+        color: #DBD2FA;
+        opacity: 0.8;
+        margin: 10px;
+        padding: 10px 15px 10px 15px;
+        display: inline-block;
+        background-color: #220F69;
+        border-radius: 6px;
+        cursor: pointer;
+      }
+      .button:hover {
+        background-color: #311A87;
+      }
     </style>
   </head>
 
@@ -22,7 +38,9 @@
 
     <canvas id="planets" style="z-index: 1;"></canvas>
 
+    <a class="button" id="toggleZoom" style="z-index: 2;">Zoom</a>
+
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
     <script src="drawPlanetarium.js"></script>
-    
   </body>
 </html>
