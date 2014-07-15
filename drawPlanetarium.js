@@ -167,7 +167,6 @@ if (orbits.getContext) { // let's just assume that it will work for the others t
 }
 
 function updateBG(bgScale) {
-  console.log(startBGW);
   var BGW = bgScale * startBGW;
   var BGH = bgScale * startBGH;
 
@@ -178,7 +177,9 @@ function updateBG(bgScale) {
 updateBG(bgScale); // starting view
 
 // **** fade off the cover once everything is loaded
-$("#cover").fadeOut(1000);
+$(document).ready(function() {
+  $("#cover").fadeOut(1000);
+});
 
 
 
