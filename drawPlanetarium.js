@@ -85,12 +85,13 @@ var height = window.innerHeight;
 
 // ZOOM VARIABLES
 var zoomLevel = 1; // default Earth view
+var startBGScale = 1; // in this case, 1 is native size
 
 var zoomLevel1 = 2;
-var BGzoomLevel1 = 2; // in this case, 1 is native size
+var BGzoomLevel1 = startBGScale;
 
 var zoomLevel2 = 0.2;
-var BGzoomLevel2 = 1.5;
+var BGzoomLevel2 = .6*startBGScale;
 
 var zoomSpeed = 1000; // ms
 var zoomingIn = false;
@@ -147,7 +148,7 @@ function prerenderImages() {
   moonCanvas = prerender("images/moon.jpg", 16, 16);
   venusCanvas = prerender("images/venus.jpg", 24, 24);
   marsCanvas = prerender("images/mars.jpg", 24, 24);
-  jupiterCanvas = prerender("images/jupiter.jpg", 36, 36);
+  jupiterCanvas = prerender("images/jupiter.png", 36, 36); // to prevent things from looking weird when zooming
   saturnCanvas = prerender("images/saturn2.png", 30, 12); // this size is the only size we will see
   uranusCanvas = prerender("images/uranus.jpg", 16, 16);
   neptuneCanvas = prerender("images/neptune.jpg", 16, 16);
@@ -166,25 +167,32 @@ var startBGW;
 var startBGH;
 var bgScale;
 
+function updateBG(bgScl) {
+  var BGW = bgScl * startBGW;
+  var BGH = bgScl * startBGH;
+
+  $("#bgImg").css("width", BGW);
+  $("#bgImg").css("height", BGH);
+  $("#bgImg").css("margin-left", (width/2 - BGW/2));
+  $("#bgImg").css("margin-top", (height/2 - BGH/2));
+}
+
 // make sure everything is loaded
+// ANIMATION STARTS HERE
+
 $(window).load(function() {
-  startBGW = $("#bg").css("width").slice(0,-2);
-  startBGH = $("#bg").css("height").slice(0,-2);
-  bgScale = 2;
+  startBGW = $("#bgImg").css("width").slice(0,-2);
+  startBGH = $("#bgImg").css("height").slice(0,-2);
+  bgScale = startBGScale;
   updateBG(bgScale); // starting view
 
   // make things viewable now
   $("#cover").fadeOut(700);
+
+  // start animation
+  animLoop();
 });
 
-function updateBG(bgScale) {
-  var BGW = bgScale * startBGW;
-  var BGH = bgScale * startBGH;
-
-  $("#bg").css("width", BGW);
-  $("#bg").css("left", (width/2 - BGW/2));
-  $("#bg").css("top", (height/2 - BGH/2));
-}
 
 
 
@@ -282,10 +290,10 @@ function render(univScale) {
   else
     moonOrbit.drawOrbiter(3, time, planetsCtx, univScale, moonCanvas);
 
-  // asteroids, no orbit drawn, just 1px dots
-  for (var i = 0; i<asteroids.length; i++) {
+  // asteroids have no orbits drawn, just dots
+  for (var i = 0; i<asteroids.length; i++)
     asteroids[i].drawOrbiter(1, time, planetsCtx, univScale, null, "#999999");
-  }
+
   // sun last so that the shadows don't make other things look strange
   orbitsCtx.shadowColor = "#ffea75";
   orbitsCtx.shadowOffsetX = 0;
@@ -320,7 +328,7 @@ $("#toggleZoom").click(function(){
 var dt = 0;
 
 // controls animation
-(function animLoop() {
+function animLoop() {
   requestAnimFrame(animLoop);
 
   // measured every frame, so we update universalScale at each tick when zooming in/out
@@ -339,7 +347,8 @@ var dt = 0;
       zoomLevel = 2;
       zoomingOut = false;
       dt = 0;
-      $("#toggleZoom").html("Zoom in");
+      $("#zoomOut").css("display", "none");
+      $("#zoomIn").css("display", "block");
       $("#toggleZoom").fadeIn(300);
     }
   }
@@ -357,7 +366,8 @@ var dt = 0;
       zoomLevel = 1;
       zoomingIn = false;
       dt = 0;
-      $("#toggleZoom").html("Zoom out");
+      $("#zoomIn").css("display", "none");
+      $("#zoomOut").css("display", "block");
       $("#toggleZoom").fadeIn(300);
     }
   }
@@ -367,7 +377,7 @@ var dt = 0;
     render(universalScale);
     updateBG(bgScale);
   }
-})();
+}
 
 
 
@@ -631,3 +641,12 @@ function Orbit(a, e, w, angularOffset, parentObject) {
 
   this.getPlanetLocation = function() { return [this.r, this.theta]; }
 }
+
+
+// info panel control
+$("#info").click(function() {
+  if ($("#infoPanel").css("display") === "none")
+    $("#infoPanel").fadeIn(400);
+  else
+    $("#infoPanel").fadeOut(400);
+})

@@ -16,22 +16,30 @@
         top: 0;
       }
       div {position: absolute;}
-      img {position: absolute;}
+      /*img {position: absolute;}*/
 
       .button {
-        position: absolute;
-        right: 0;
-        bottom: 0;
+        position: relative;
         opacity: 0.5;
         margin: 10px;
-        padding: 10px 15px 10px 15px;
+        padding: 10px;
         display: inline-block;
-        background-color: #220F69;
+        background-color: #DBD2FA;
         border-radius: 6px;
         cursor: pointer;
       }
       .button:hover {
-        background-color: #311A87;
+        opacity: 0.8;
+      }
+      #button-box {
+        right: 0;
+        bottom: 0;
+      }
+
+      #bg {
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
       }
 
       #overlay {
@@ -39,10 +47,30 @@
         height: 100%;
       }
 
+      #infoPanel {
+        color: black;
+        opacity: 0.5;
+        margin: 10px;
+        padding: 10px;
+        display: inline-block;
+        background-color: #DBD2FA;
+        border-radius: 6px;
+
+        width: 200px;
+        height: calc(100% - 100px); /* 70px for the button-box, 10px for top padding, 10px for extra space */
+
+        right: 0;
+      }
+
       #year {
         margin: 10px;
+        padding: 10px;
+        opacity: 0.5;
         bottom: 0;
       }
+
+      #zoomIn { display: none; }
+      #zoomOut { display: block; }
 
       #cover {
         width: 100%;
@@ -53,14 +81,30 @@
   </head>
 
   <body>
-    <img id="bg" src="images/bg.jpg" style="z-index: 0;" />
+    <div id="bg" style="z-index: 0;">
+      <img id="bgImg" src="images/bg.jpg" />
+    </div>
 
     <canvas id="orbits" style="z-index: 1;">Sorry, your browser does not support HTML5 canvas. Please try a different browser.</canvas>
 
     <canvas id="planets" style="z-index: 2;"></canvas>
 
-    <div id="overlay" style="z-index: 3;"> <!--overlay-->
-      <a class="button" id="toggleZoom">Zoom out</a>
+    <div id="overlay" style="z-index: 3;">
+      <div id="button-box">
+
+        <a class="button" id="toggleZoom">
+          <img id="zoomOut" src="images/zoom_out.png" />
+          <img id="zoomIn" src="images/zoom_in.png" />
+        </a>
+
+        <a class="button" style="margin-left: 0;" id="info">
+          <img id="zoomOut" src="images/info.png" />
+        </a>
+
+      </div>
+
+      <div id="infoPanel">TEXT GOES HERE</div>
+
       <div id="year">Earth Year: <span id="yearNum"></span></div>
     </div>
 
