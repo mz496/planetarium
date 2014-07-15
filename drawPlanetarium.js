@@ -84,11 +84,7 @@ var width = window.innerWidth;
 var height = window.innerHeight;
 
 // ZOOM VARIABLES
-var startBGW = $("#bg").css("width").slice(0,-2);
-var startBGH = $("#bg").css("height").slice(0,-2);
-
 var zoomLevel = 1; // default Earth view
-var bgScale = 2;
 
 var zoomLevel1 = 2;
 var BGzoomLevel1 = 2; // in this case, 1 is native size
@@ -166,6 +162,21 @@ if (orbits.getContext) { // let's just assume that it will work for the others t
   imageCanvasesLoaded = true;
 }
 
+var startBGW;
+var startBGH;
+var bgScale;
+
+// make sure everything is loaded
+$(window).load(function() {
+  startBGW = $("#bg").css("width").slice(0,-2);
+  startBGH = $("#bg").css("height").slice(0,-2);
+  bgScale = 2;
+  updateBG(bgScale); // starting view
+
+  // make things viewable now
+  $("#cover").fadeOut(700);
+});
+
 function updateBG(bgScale) {
   var BGW = bgScale * startBGW;
   var BGH = bgScale * startBGH;
@@ -174,12 +185,6 @@ function updateBG(bgScale) {
   $("#bg").css("left", (width/2 - BGW/2));
   $("#bg").css("top", (height/2 - BGH/2));
 }
-updateBG(bgScale); // starting view
-
-// **** fade off the cover once everything is loaded
-$(document).ready(function() {
-  $("#cover").fadeOut(1000);
-});
 
 
 
@@ -223,6 +228,8 @@ addAsteroids(2.9, 3.2, 40);
 
 
 
+// draw each frame
+
 function render(univScale) {
   width = window.innerWidth;
   height = window.innerHeight;
@@ -249,8 +256,8 @@ function render(univScale) {
   // make sure the small planets stay visible
   if (univScale < 0.5) {
     mercuryOrbit.drawOrbiter(1, time, planetsCtx, univScale, mercuryCanvas);
-    venusOrbit.drawOrbiter(1, time, planetsCtx, univScale, venusCanvas);
-    earthOrbit.drawOrbiter(1, time, planetsCtx, univScale, earthCanvas);
+    venusOrbit.drawOrbiter(2, time, planetsCtx, univScale, venusCanvas);
+    earthOrbit.drawOrbiter(2, time, planetsCtx, univScale, earthCanvas);
     marsOrbit.drawOrbiter(1, time, planetsCtx, univScale, marsCanvas);
   }
   else {
@@ -263,7 +270,7 @@ function render(univScale) {
   saturnOrbit.drawOrbiter(data.saturn.r*univScale/2000, time, planetsCtx, univScale, saturnCanvas);
   uranusOrbit.drawOrbiter(data.uranus.r*univScale/2000, time, planetsCtx, univScale, uranusCanvas);
   neptuneOrbit.drawOrbiter(data.neptune.r*univScale/2000, time, planetsCtx, univScale, neptuneCanvas);
-  plutoOrbit.drawOrbiter(2, time, planetsCtx, univScale, plutoCanvas);
+  plutoOrbit.drawOrbiter(2.5, time, planetsCtx, univScale, plutoCanvas);
 
   halleyOrbit.drawOrbiter(1, time, planetsCtx, univScale, null); // almost always out of the inner planet scene, so just make it have constant radius
 
@@ -271,9 +278,9 @@ function render(univScale) {
   var earthLocation = earthOrbit.getPlanetLocation();
   moonOrbit.drawOrbit(orbitsCtx, univScale);
   if (univScale < 0.5)
-    moonOrbit.drawOrbiter(2, time, planetsCtx, univScale, moonCanvas);
+    moonOrbit.drawOrbiter(1, time, planetsCtx, univScale, moonCanvas);
   else
-    moonOrbit.drawOrbiter(1.5, time, planetsCtx, univScale, moonCanvas);
+    moonOrbit.drawOrbiter(3, time, planetsCtx, univScale, moonCanvas);
 
   // asteroids, no orbit drawn, just 1px dots
   for (var i = 0; i<asteroids.length; i++) {
@@ -356,17 +363,20 @@ var dt = 0;
   }
 
   // NOTA
-  if (!zoomingIn && !zoomingOut)
+  if (!zoomingIn && !zoomingOut) {
     render(universalScale);
+    updateBG(bgScale);
+  }
 })();
 
 
 
 
 
-function degToRad(degree) {
-  return degree*Math.PI/180;
-}
+
+// the math functions that drive the coordinate system
+
+function degToRad(degree) { return degree*Math.PI/180; }
 
 function polarToCanvas(r, theta, scale, origin) { // -> [float, float]
   // scale and origin are optional (origin in polar coordinates)
@@ -483,6 +493,8 @@ function drawPolarEllipse(a_, e, w, scale, layer, origin, color) {
 
 
 
+
+// main orbit object that keeps track of each body in the solar system
 
 function Orbit(a, e, w, angularOffset, parentObject) {
   // a=semimajor axis (AU), e=eccentricity (unitless), w=argument of perihelion (rad), angularOffset=true anomaly of the position at time t=0 (rad)
@@ -617,7 +629,5 @@ function Orbit(a, e, w, angularOffset, parentObject) {
     drawDot(this.location, planetRadius, layer, imageCanvas, color);
   }
 
-  this.getPlanetLocation = function() {
-    return [this.r, this.theta];
-  }
+  this.getPlanetLocation = function() { return [this.r, this.theta]; }
 }
