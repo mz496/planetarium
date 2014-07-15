@@ -6,6 +6,8 @@
         width: 100%;
         height: 100%;
         overflow: hidden;
+        background-color: #000000;
+        color: #DBD2FA;
         margin: 0;
       }
       canvas {
@@ -13,12 +15,14 @@
         left: 0;
         top: 0;
       }
+      div {position: absolute;}
+      img {position: absolute;}
+
       .button {
         position: absolute;
         right: 0;
         bottom: 0;
-        color: #DBD2FA;
-        opacity: 0.8;
+        opacity: 0.5;
         margin: 10px;
         padding: 10px 15px 10px 15px;
         display: inline-block;
@@ -29,16 +33,38 @@
       .button:hover {
         background-color: #311A87;
       }
+
+      #overlay {
+        width: 100%;
+        height: 100%;
+      }
+
+      #year {
+        margin: 10px;
+        bottom: 0;
+      }
+
+      #cover {
+        width: 100%;
+        height: 100%;
+        background-color: black;
+      }
     </style>
   </head>
 
   <body>
+    <img id="bg" src="images/bg.jpg" style="z-index: 0;" />
 
-    <canvas id="orbits" style="z-index: 0;">Sorry, your browser does not support HTML5 canvas. Please try a different browser.</canvas>
+    <canvas id="orbits" style="z-index: 1;">Sorry, your browser does not support HTML5 canvas. Please try a different browser.</canvas>
 
-    <canvas id="planets" style="z-index: 1;"></canvas>
+    <canvas id="planets" style="z-index: 2;"></canvas>
 
-    <a class="button" id="toggleZoom" style="z-index: 2;">Zoom</a>
+    <div id="overlay" style="z-index: 3;"> <!--overlay-->
+      <a class="button" id="toggleZoom">Zoom out</a>
+      <div id="year">Earth Year: <span id="yearNum"></span></div>
+    </div>
+
+    <div id="cover" style="z-index: 100;"></div>
 
     <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
     <script src="drawPlanetarium.js"></script>

@@ -1,30 +1,32 @@
 var fps = 60;
+var startYear = 2014;
+var secPerEarthYear = 10;
 
 // planetary orbital elements from wikipedia
-// at scale 1:
-// 1 AU of distance = 100 px
+// at zoom level 1:
+// 1 AU of distance = 200 px (1 px = 0.005 AU)
 // 1000 km of radius = 1 px
 var data = {
   mercury: {
     a: 0.387,
     e: 0.206,
-    w: degToRad(29.124),
+    w: degToRad(29),
     r: 2440
   },
   venus: {
     a: 0.723,
     e: 0.007,
-    w: degToRad(55.186),
+    w: degToRad(55),
     r: 6052
   },
   earth: {
     a: 1,
     e: 0.017,
-    w: degToRad(114.208),
+    w: degToRad(114),
     r: 6371
   },
   moon: {
-    a: Math.pow(27.3/365.25, 2/3),
+    a: Math.pow(27.3/365.25, 2/3), // from Kepler 3
     e: 0.0549,
     w: 0, // (?) varies significantly with time and is not clearly defined in any fixed reference frame
     r: 2000
@@ -32,10 +34,79 @@ var data = {
   mars: {
     a: 1.524,
     e: 0.093,
-    w: degToRad(286.537),
+    w: degToRad(287),
     r: 3390
+  },
+  jupiter: {
+    a: 5.204,
+    e: 0.049,
+    w: degToRad(275),
+    r: 69911
+  },
+  saturn: {
+    a: 9.582,
+    e: 0.056,
+    w: degToRad(336),
+    r: 70*2000 // the image is the proper size (58232 for planet radius) and transparent in the proper places, but this is just so that the rings don't get clipped
+  },
+  uranus: {
+    a: 19.229,
+    e: 0.044,
+    w: degToRad(97),
+    r: 25362*1.5
+  },
+  neptune: {
+    a: 30.104,
+    e: 0.011,
+    w: degToRad(266),
+    r: 24622*1.5
+  },
+  pluto: { // which will always be a planet #vivapluto
+    a: 39.264,
+    e: 0.249,
+    w: degToRad(114),
+    r: 1184
+  },
+  halley: {
+    a: 17.9,
+    e: 0.967,
+    w: degToRad(20)
   }
 }
+
+
+
+var orbits = document.getElementById("orbits");
+var planets = document.getElementById("planets");
+var imageCanvasesLoaded = false;
+
+var width = window.innerWidth;
+var height = window.innerHeight;
+
+// ZOOM VARIABLES
+var startBGW = $("#bg").css("width").slice(0,-2);
+var startBGH = $("#bg").css("height").slice(0,-2);
+
+var zoomLevel = 1; // default Earth view
+var bgScale = 2;
+
+var zoomLevel1 = 2;
+var BGzoomLevel1 = 2; // in this case, 1 is native size
+
+var zoomLevel2 = 0.2;
+var BGzoomLevel2 = 1.5;
+
+var zoomSpeed = 1000; // ms
+var zoomingIn = false;
+var zoomingOut = false;
+
+var universalScale = zoomLevel1;
+
+$("#yearNum").html(startYear);
+
+
+
+
 
 // some optimization shim thingy (http://www.paulirish.com/2011/requestanimationframe-for-smart-animating/)
 window.requestAnimFrame = (function(){
@@ -61,49 +132,95 @@ function prerender(imgSrc, w, h) {
   return imgCanvas;
 }
 
+var sunCanvas;
+var mercuryCanvas;
+var earthCanvas;
+var moonCanvas;
+var venusCanvas;
+var marsCanvas;
+var jupiterCanvas;
+var saturnCanvas;
+var uranusCanvas;
+var neptuneCanvas;
+var plutoCanvas;
 
-
-
-
-// OBJECTS IN VIEW
-
-var orbits = document.getElementById("orbits");
-var planets = document.getElementById("planets");
-var imageCanvasesLoaded = false;
+function prerenderImages() {
+  sunCanvas = prerender("images/sun.jpg", 80, 77);
+  mercuryCanvas = prerender("images/mercury.jpg", 16, 16);
+  earthCanvas = prerender("images/earth.jpg", 16, 16);
+  moonCanvas = prerender("images/moon.jpg", 16, 16);
+  venusCanvas = prerender("images/venus.jpg", 24, 24);
+  marsCanvas = prerender("images/mars.jpg", 24, 24);
+  jupiterCanvas = prerender("images/jupiter.jpg", 36, 36);
+  saturnCanvas = prerender("images/saturn2.png", 30, 12); // this size is the only size we will see
+  uranusCanvas = prerender("images/uranus.jpg", 16, 16);
+  neptuneCanvas = prerender("images/neptune.jpg", 16, 16);
+  plutoCanvas = prerender("images/pluto.jpg", 8, 8);
+}
 
 // pre-render everything possible for better performance
 if (orbits.getContext) { // let's just assume that it will work for the others too...
   var orbitsCtx = orbits.getContext("2d");
   var planetsCtx = planets.getContext("2d");
-  var sunCanvas = prerender("images/sun.jpg", 80, 77);
-  var mercuryCanvas = prerender("images/mercury.jpg", 16, 16);
-  var earthCanvas = prerender("images/earth.jpg", 16, 16);
-  var venusCanvas = prerender("images/venus.jpg", 24, 24);
-  var marsCanvas = prerender("images/mars.jpg", 24, 24);
-  var moonCanvas = prerender("images/moon.jpg", 16, 16);
+  prerenderImages();
   imageCanvasesLoaded = true;
 }
 
-var width = window.innerWidth;
-var height = window.innerHeight;
+function updateBG(bgScale) {
+  console.log(startBGW);
+  var BGW = bgScale * startBGW;
+  var BGH = bgScale * startBGH;
 
-var zoomLevel = 1; // default
-var zoomLevel1 = 2;
-var zoomLevel2 = 0.5;
-var zoomSpeed = 1000; // ms
-var zoomingIn = false;
-var zoomingOut = false;
-var universalScale = zoomLevel1;
+  $("#bg").css("width", BGW);
+  $("#bg").css("left", (width/2 - BGW/2));
+  $("#bg").css("top", (height/2 - BGH/2));
+}
+updateBG(bgScale); // starting view
+
+// **** fade off the cover once everything is loaded
+$("#cover").fadeOut(1000);
+
+
+
 
 var time = 0;
-var mercuryOrbit = new Orbit(data.mercury.a, data.mercury.e, data.mercury.w, universalScale, 0);
-var venusOrbit = new Orbit(data.venus.a, data.venus.e, data.venus.w, universalScale, 0);
-var earthOrbit = new Orbit(data.earth.a, data.earth.e, data.earth.w, universalScale, 0);
-var marsOrbit = new Orbit(data.mars.a, data.mars.e, data.mars.w, universalScale, 0);
+var mercuryOrbit = new Orbit(data.mercury.a, data.mercury.e, data.mercury.w, 0);
+var venusOrbit = new Orbit(data.venus.a, data.venus.e, data.venus.w, 0);
+var earthOrbit = new Orbit(data.earth.a, data.earth.e, data.earth.w, 0);
+var marsOrbit = new Orbit(data.mars.a, data.mars.e, data.mars.w, 0);
+var jupiterOrbit = new Orbit(data.jupiter.a, data.jupiter.e, data.jupiter.w, 0);
+var saturnOrbit = new Orbit(data.saturn.a, data.saturn.e, data.saturn.w, 0);
+var uranusOrbit = new Orbit(data.uranus.a, data.uranus.e, data.uranus.w, degToRad(50));
+var neptuneOrbit = new Orbit(data.neptune.a, data.neptune.e, data.neptune.w, degToRad(90));
+var plutoOrbit = new Orbit(data.pluto.a, data.pluto.e, data.pluto.w, degToRad(40));
 
-var moonOrbit = new Orbit(data.moon.a, data.moon.e, data.moon.w, universalScale, 0, earthOrbit);
+var moonOrbit = new Orbit(data.moon.a, data.moon.e, data.moon.w, 0, earthOrbit);
 
-var halleyOrbit = new Orbit(17.8, .967, degToRad(20), universalScale, degToRad(-1));
+var halleyOrbit = new Orbit(data.halley.a, data.halley.e, data.halley.w, Math.PI - 0.0147833); // calculated from getPhi in the other direction but input manually, since this time we want the angle in terms of theta, not phi. Last perihelion was 28 years ago (1986), and period is ~76 years, and angularOffset is measured from the center (sun)
+
+function rand(lower, upper) {
+  // uniformly generates a random number from lower to upper by scaling/shifting the range of Math.random()
+  return Math.random() * (upper-lower) + lower;
+}
+
+// random asteroids in the belt, rough distributions taken from wikipedia
+var asteroids = [];
+
+function addAsteroids(lowerRadius, upperRadius, num) { // num divisible by 10
+  for (var i = 0; i<0.1*num; i++)
+    asteroids.push(new Orbit(rand(lowerRadius,upperRadius), rand(0,0.05), rand(0,2*Math.PI), rand(0,2*Math.PI)));
+  for (var i = 0; i<0.8*num; i++)
+    asteroids.push(new Orbit(rand(lowerRadius,upperRadius), rand(0.1,0.2), rand(0,2*Math.PI), rand(0,2*Math.PI)));
+  for (var i = 0; i<0.1*num; i++)
+    asteroids.push(new Orbit(rand(lowerRadius,upperRadius), rand(0.2,0.35), rand(0,2*Math.PI), rand(0,2*Math.PI)));
+}
+addAsteroids(2.2, 2.45, 80);
+addAsteroids(2.55, 2.8, 60);
+addAsteroids(2.9, 3.2, 40);
+
+
+
+
 
 function render(univScale) {
   width = window.innerWidth;
@@ -113,45 +230,82 @@ function render(univScale) {
   planets.width = width;
   planets.height = height;
 
-  orbitsCtx.fillRect(0, 0, width, height);
+  //orbitsCtx.fillRect(0, 0, width, height);
 
   // orbits
-  mercuryOrbit.drawOrbit(orbitsCtx, univScale, null);
-  venusOrbit.drawOrbit(orbitsCtx, univScale, null);
-  earthOrbit.drawOrbit(orbitsCtx, univScale, null);
-  marsOrbit.drawOrbit(orbitsCtx, univScale, null);
-  halleyOrbit.drawOrbit(orbitsCtx, univScale, null);
+  mercuryOrbit.drawOrbit(orbitsCtx, univScale);
+  venusOrbit.drawOrbit(orbitsCtx, univScale);
+  earthOrbit.drawOrbit(orbitsCtx, univScale);
+  marsOrbit.drawOrbit(orbitsCtx, univScale);
+  jupiterOrbit.drawOrbit(orbitsCtx, univScale);
+  saturnOrbit.drawOrbit(orbitsCtx, univScale);
+  uranusOrbit.drawOrbit(orbitsCtx, univScale);
+  neptuneOrbit.drawOrbit(orbitsCtx, univScale);
+  plutoOrbit.drawOrbit(orbitsCtx, univScale);
+  halleyOrbit.drawOrbit(orbitsCtx, univScale);
 
   // planets
-  mercuryOrbit.drawOrbiter(data.mercury.r*univScale/2000, time, planetsCtx, univScale, mercuryCanvas, null);
-  venusOrbit.drawOrbiter(data.venus.r*univScale/2000, time, planetsCtx, univScale, venusCanvas, null);
-  earthOrbit.drawOrbiter(data.earth.r*univScale/2000, time, planetsCtx, univScale, earthCanvas, null);
-  marsOrbit.drawOrbiter(data.mars.r*univScale/2000, time, planetsCtx, univScale, marsCanvas, null);
-  halleyOrbit.drawOrbiter(3, time, planetsCtx, univScale, null, null);
+  // make sure the small planets stay visible
+  if (univScale < 0.5) {
+    mercuryOrbit.drawOrbiter(1, time, planetsCtx, univScale, mercuryCanvas);
+    venusOrbit.drawOrbiter(1, time, planetsCtx, univScale, venusCanvas);
+    earthOrbit.drawOrbiter(1, time, planetsCtx, univScale, earthCanvas);
+    marsOrbit.drawOrbiter(1, time, planetsCtx, univScale, marsCanvas);
+  }
+  else {
+    mercuryOrbit.drawOrbiter(data.mercury.r*univScale/2000, time, planetsCtx, univScale, mercuryCanvas);
+    venusOrbit.drawOrbiter(data.venus.r*univScale/2000, time, planetsCtx, univScale, venusCanvas);
+    earthOrbit.drawOrbiter(data.earth.r*univScale/2000, time, planetsCtx, univScale, earthCanvas);
+    marsOrbit.drawOrbiter(data.mars.r*univScale/2000, time, planetsCtx, univScale, marsCanvas);
+  }
+  jupiterOrbit.drawOrbiter(data.jupiter.r*univScale/2000, time, planetsCtx, univScale, jupiterCanvas);
+  saturnOrbit.drawOrbiter(data.saturn.r*univScale/2000, time, planetsCtx, univScale, saturnCanvas);
+  uranusOrbit.drawOrbiter(data.uranus.r*univScale/2000, time, planetsCtx, univScale, uranusCanvas);
+  neptuneOrbit.drawOrbiter(data.neptune.r*univScale/2000, time, planetsCtx, univScale, neptuneCanvas);
+  plutoOrbit.drawOrbiter(2, time, planetsCtx, univScale, plutoCanvas);
+
+  halleyOrbit.drawOrbiter(1, time, planetsCtx, univScale, null); // almost always out of the inner planet scene, so just make it have constant radius
 
   // satellites, since we need getPlanetLocation updated after everything's been drawn already
-
   var earthLocation = earthOrbit.getPlanetLocation();
-  moonOrbit.drawOrbit(orbitsCtx, univScale, earthLocation);
-  moonOrbit.drawOrbiter(data.moon.r*univScale/2000, time, planetsCtx, univScale, moonCanvas, earthLocation);
+  moonOrbit.drawOrbit(orbitsCtx, univScale);
+  if (univScale < 0.5)
+    moonOrbit.drawOrbiter(2, time, planetsCtx, univScale, moonCanvas);
+  else
+    moonOrbit.drawOrbiter(1.5, time, planetsCtx, univScale, moonCanvas);
 
+  // asteroids, no orbit drawn, just 1px dots
+  for (var i = 0; i<asteroids.length; i++) {
+    asteroids[i].drawOrbiter(1, time, planetsCtx, univScale, null, "#999999");
+  }
   // sun last so that the shadows don't make other things look strange
   orbitsCtx.shadowColor = "#ffea75";
   orbitsCtx.shadowOffsetX = 0;
   orbitsCtx.shadowOffsetY = 0;
   orbitsCtx.shadowBlur = 30*univScale;
-  drawDot(polarToCanvas(0, 0), 15*univScale, orbitsCtx, null, "#ffd900"); // origin
-  drawDot(polarToCanvas(0, 0), 15*univScale, orbitsCtx, sunCanvas);//, "#ffd900"); // origin
+  drawDot(polarToCanvas(0, 0), 15*univScale, orbitsCtx, null, "#ffd900"); 
+  drawDot(polarToCanvas(0, 0), 15*univScale, orbitsCtx, sunCanvas);
+
+  // update year counter if Earth has completed an orbit
+  updateYear();
 
   time += 1000/fps;
 }
 
+function updateYear() {
+  var yearsElapsed = time/(1000*secPerEarthYear);
+  var currentYear = +$("#yearNum").html(); // unary plus
+
+  if (currentYear != startYear + Math.floor(yearsElapsed))
+    $("#yearNum").html(currentYear + 1); // only way is up
+}
+
 $("#toggleZoom").click(function(){
   $("#toggleZoom").fadeOut(300, function(){
-    if (zoomLevel === 1)
-      zoomingIn = true;
-    else
+    if (zoomLevel === 1) // default
       zoomingOut = true;
+    else
+      zoomingIn = true;
   })
 });
 
@@ -162,31 +316,40 @@ var dt = 0;
   requestAnimFrame(animLoop);
 
   // measured every frame, so we update universalScale at each tick when zooming in/out
+  // zooming in/out follows a cosine curve with wavelength 2 sec, starting/ending points at proper zooms
 
-  // IN
-  if (zoomingIn) {
-    universalScale = (zoomLevel1-zoomLevel2)/2 * Math.cos(dt * Math.PI/zoomSpeed) + (zoomLevel1+zoomLevel2)/2;
+  // OUT
+  if (zoomingOut) {
+    universalScale = (zoomLevel1-zoomLevel2)/2 * Math.cos(dt * Math.PI/zoomSpeed) + (zoomLevel1+zoomLevel2)/2; // increase from zl2 to zl1
+    bgScale = (BGzoomLevel1-BGzoomLevel2)/2 * Math.cos(dt * Math.PI/zoomSpeed) + (BGzoomLevel1+BGzoomLevel2)/2;// increase from bgzl2 to bgzl1
+
     render(universalScale);
+    updateBG(bgScale);
     dt += 1000/fps;
 
-    if (dt > 1000) { // finished zooming
+    if (dt > 1000) { // finished zooming out
       zoomLevel = 2;
-      zoomingIn = false;
+      zoomingOut = false;
       dt = 0;
+      $("#toggleZoom").html("Zoom in");
       $("#toggleZoom").fadeIn(300);
     }
   }
 
-  // OUT
-  if (zoomingOut) {
-    universalScale = -(zoomLevel1-zoomLevel2)/2 * Math.cos(dt * Math.PI/zoomSpeed) + (zoomLevel1+zoomLevel2)/2;
+  // IN
+  if (zoomingIn) {
+    universalScale = -(zoomLevel1-zoomLevel2)/2 * Math.cos(dt * Math.PI/zoomSpeed) + (zoomLevel1+zoomLevel2)/2; // decrease from zl1 to zl2
+    bgScale = -(BGzoomLevel1-BGzoomLevel2)/2 * Math.cos(dt * Math.PI/zoomSpeed) + (BGzoomLevel1+BGzoomLevel2)/2;// increase from bgzl2 to bgzl1
+
     render(universalScale);
+    updateBG(bgScale);
     dt += 1000/fps;
 
-    if (dt > 1000) { // finished zooming
+    if (dt > 1000) { // finished zooming in
       zoomLevel = 1;
-      zoomingOut = false;
+      zoomingIn = false;
       dt = 0;
+      $("#toggleZoom").html("Zoom out");
       $("#toggleZoom").fadeIn(300);
     }
   }
@@ -257,8 +420,8 @@ function drawDot(center, radius, layer, imageCanvas, color) {
   // radius in pixels, center in canvas coordinates
 
   if (!imageCanvas) {
-    layer.strokeStyle = (!color) ? "#00ffff" : color;
-    layer.fillStyle = (!color) ? "#00ffff" : color;
+    layer.strokeStyle = (!color) ? "#ffffff" : color;
+    layer.fillStyle = (!color) ? "#ffffff" : color;
 
     layer.beginPath();
     layer.arc(center[0], center[1], radius, 0, 2*Math.PI);
@@ -288,7 +451,7 @@ function drawPolarEllipse(a_, e, w, scale, layer, origin, color) {
   var b = a*Math.sqrt(1-e*e); // semiminor axis
   var c = a*e; // distance from center to focus
 
-  layer.strokeStyle = (!color) ? "#555555" : color;
+  layer.strokeStyle = (!color) ? "#777777" : color;
 
   if (!origin)
     var origin = [0,0];
@@ -398,11 +561,13 @@ function Orbit(a, e, w, angularOffset, parentObject) {
     return [r1, theta1+w];
   }
 
-  this.drawOrbit = function(layer, scale, origin) {
+  this.drawOrbit = function(layer, scale) {
     // draws an orbit in using origin as polar(0,0)
 
-    if (!origin)
+    if (!nested)
       var origin = [0,0];
+    else
+      var origin = parentObject.getPlanetLocation();
 
     drawPolarEllipse(a, e, w, scale, layer, origin);
 
@@ -416,11 +581,15 @@ function Orbit(a, e, w, angularOffset, parentObject) {
 
   }
 
-  this.drawOrbiter = function(planetRadius, time, layer, scale, imageCanvas, origin) {
+  this.drawOrbiter = function(planetRadius, time, layer, scale, imageCanvas, color) { // color optional
     // orbiting object drawn as a dot of some radius (px), after some time (ms), onto some layer
 
-    if (!origin)
+    if (!nested)
       var origin = [0,0];
+    else {
+      var origin = parentObject.getPlanetLocation();
+      origin[0] = 0; // not really sure why this line is necessary...
+    }
 
     // Kepler 3: P^2=a^3 where P in yr, a in AU (r units)
     var period = Math.pow(a, 1.5);
@@ -428,7 +597,7 @@ function Orbit(a, e, w, angularOffset, parentObject) {
     // now, as in old drawOrbit, loop through the angle at the other focus phi from 0 to 2pi at constant rate
     
     // *** THIS LINE DETERMINES SPEED OF ANIMATIONS ***
-    var yearsSinceZero = time/(1000*10); // 1 earth yr = 10 sec
+    var yearsSinceZero = time/(1000*secPerEarthYear); // 1 earth yr = 10 sec
     // ************************************************
 
     var fractionPeriodCovered = yearsSinceZero/period; // where are we in the period?
@@ -442,9 +611,9 @@ function Orbit(a, e, w, angularOffset, parentObject) {
     // update the properties for reading
     this.r = trueR;
     this.theta = trueTheta;
-    this.location = polarToCanvas(trueR, trueTheta, scale, origin); // for convenience, esp with satellites and the origin shift vector
+    this.location = polarToCanvas(trueR, trueTheta, scale, origin); // for convenience, esp with satellites
 
-    drawDot(this.location, planetRadius, layer, imageCanvas);
+    drawDot(this.location, planetRadius, layer, imageCanvas, color);
   }
 
   this.getPlanetLocation = function() {
