@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html>
   <head>
+    <link href='http://fonts.googleapis.com/css?family=Montserrat' rel='stylesheet' type='text/css'>
+    <link href='http://fonts.googleapis.com/css?family=Open+Sans:400,700' rel='stylesheet' type='text/css'>
     <style>
       html, body {
         width: 100%;
@@ -17,6 +19,20 @@
       }
       div {position: absolute;}
       /*img {position: absolute;}*/
+      h1 {
+        font-family: 'Montserrat', sans-serif;
+        font-size: 24px;
+        text-transform: uppercase;
+      }
+      h2 {
+        font-family: 'Montserrat', sans-serif;
+        font-size: 14px;
+        text-transform: uppercase;
+      }
+      p {
+        font-family: 'Open Sans', sans-serif;
+        font-size: 13px;
+      }
 
       .button {
         position: relative;
@@ -52,19 +68,18 @@
         opacity: 0.5;
         margin: 10px;
         padding: 10px;
-        display: inline-block;
+        display: none;
         background-color: #DBD2FA;
         border-radius: 6px;
 
-        width: 200px;
-        height: calc(100% - 100px); /* 70px for the button-box, 10px for top padding, 10px for extra space */
+        width: 220px;
+        height: calc(100% - 100px);
 
         right: 0;
       }
 
       #year {
         margin: 10px;
-        padding: 10px;
         opacity: 0.5;
         bottom: 0;
       }
@@ -90,7 +105,7 @@
     <canvas id="planets" style="z-index: 2;"></canvas>
 
     <div id="overlay" style="z-index: 3;">
-      <div id="button-box">
+      <div id="button-box" style="margin-bottom: -5px;">
 
         <a class="button" id="toggleZoom">
           <img id="zoomOut" src="images/zoom_out.png" />
@@ -103,9 +118,41 @@
 
       </div>
 
-      <div id="infoPanel">TEXT GOES HERE</div>
+      <div id="infoPanel" style="text-align: center; overflow: auto;">
+        <h1>10-second Planetarium</h1>
+        <hr>
+        <p>If Earth took ten seconds to go around the sun (one year), this is about how long it would take for other celestial bodies:</p>
+        <p>Placing the cursor on a name will highlight that body's orbit.</p>
+        <h2><span id="mercury">Mercury:</span></h2>
+        <p>2.41 seconds (88 days)</p>
+        <h2><span id="venus">Venus:</span></h2>
+        <p>6.15 seconds (225 days)</p>
+        <h2><span id="earth">Earth:</span></h2>
+        <p>10.00 seconds (365 days)</p>
+        <h2><span id="moon">Earth's moon:</span></h2>
+        <p>0.75 seconds (27 days)</p>
+        <h2><span id="mars">Mars:</span></h2>
+        <p>18.81 seconds (687 days)</p>
+        <h2><span id="jupiter">Jupiter:</span></h2>
+        <p>1 min 59 sec (11.9 years)
+        <h2><span id="saturn">Saturn:</span></h2>
+        <p>4 min 55 sec (29.5 years)</p>
+        <h2><span id="uranus">Uranus:</span></h2>
+        <p>14 min 0 sec (84.0 years)</p>
+        <h2><span id="neptune">Neptune:</span></h2>
+        <p>27 min 28 sec (164.8 years)</p>
+        <h2><span id="pluto" title="long live pluto">Pluto:</span></h2>
+        <p>41 min 17 sec (247.7 years)</p>
+        <h2><span id="halley">Halley's Comet:</span></h2>
+        <p>12 min 33 sec (75.3 years)<br />
+        The next approach to the sun will occur in 2061.</p>
+      </div>
 
-      <div id="year">Earth Year: <span id="yearNum"></span></div>
+      <div id="year" style="text-align: center;">
+        <h1 style="margin: 0; font-size: 18px;">Earth<br />Year</h1>
+        <hr style="margin: 3px;">
+        <p style="margin: -5px 0 -10px 0; font-weight: bold; font-size: 36px;"><span id="yearNum"></span></p>
+      </div>
     </div>
 
     <div id="cover" style="z-index: 100;"></div>

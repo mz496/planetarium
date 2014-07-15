@@ -70,7 +70,7 @@ var data = {
   halley: {
     a: 17.9,
     e: 0.967,
-    w: degToRad(20)
+    w: degToRad(-20)
   }
 }
 
@@ -85,7 +85,7 @@ var height = window.innerHeight;
 
 // ZOOM VARIABLES
 var zoomLevel = 1; // default Earth view
-var startBGScale = 1; // in this case, 1 is native size
+var startBGScale = 0.9; // in this case, 1 is native size
 
 var zoomLevel1 = 2;
 var BGzoomLevel1 = startBGScale;
@@ -100,6 +100,50 @@ var zoomingOut = false;
 var universalScale = zoomLevel1;
 
 $("#yearNum").html(startYear);
+
+// info panel control
+$("#info").click(function() {
+  if ($("#infoPanel").css("display") === "none")
+    $("#infoPanel").fadeIn(400);
+  else
+    $("#infoPanel").fadeOut(400);
+});
+
+// assigning highlights to the text
+// update the global variable that is checked at each frame to determine whether an orbit is highlighted or not
+// order is M V E M J S U N P HC Moon
+
+// contains the jQuery objects in respective order for the highlights array
+var highlightsJQ = [
+$("#mercury"),
+$("#venus"),
+$("#earth"),
+$("#mars"),
+$("#jupiter"),
+$("#saturn"),
+$("#uranus"),
+$("#neptune"),
+$("#pluto"),
+$("#halley"),
+$("#moon")
+];
+
+var highlights = []; // initially populate the array, live
+for (var i=0; i<highlightsJQ.length; i++)
+  highlights.push(false);
+
+for (var i=0; i<highlightsJQ.length; i++) { // pass the (not live) data i into the jQuery
+  highlightsJQ[i].on("mouseenter", {id:i}, function(e) {
+    var I = e.data.id;
+    highlightsJQ[I].css("text-shadow", "0 0 3px #000000"); // handle the style of the text in the info panel
+    highlights[I] = true;
+  });
+  highlightsJQ[i].on("mouseleave", {id:i}, function(e) {
+    var I = e.data.id;
+    highlightsJQ[I].css("text-shadow", "inherit");
+    highlights[I] = false;
+  });
+}
 
 
 
@@ -142,7 +186,7 @@ var neptuneCanvas;
 var plutoCanvas;
 
 function prerenderImages() {
-  sunCanvas = prerender("images/sun.jpg", 80, 77);
+  sunCanvas = prerender("images/sun.jpg", 110, 105);
   mercuryCanvas = prerender("images/mercury.jpg", 16, 16);
   earthCanvas = prerender("images/earth.jpg", 16, 16);
   moonCanvas = prerender("images/moon.jpg", 16, 16);
@@ -187,7 +231,7 @@ $(window).load(function() {
   updateBG(bgScale); // starting view
 
   // make things viewable now
-  $("#cover").fadeOut(700);
+  $("#cover").fadeOut(1000);
 
   // start animation
   animLoop();
@@ -204,7 +248,7 @@ var earthOrbit = new Orbit(data.earth.a, data.earth.e, data.earth.w, 0);
 var marsOrbit = new Orbit(data.mars.a, data.mars.e, data.mars.w, 0);
 var jupiterOrbit = new Orbit(data.jupiter.a, data.jupiter.e, data.jupiter.w, 0);
 var saturnOrbit = new Orbit(data.saturn.a, data.saturn.e, data.saturn.w, 0);
-var uranusOrbit = new Orbit(data.uranus.a, data.uranus.e, data.uranus.w, degToRad(50));
+var uranusOrbit = new Orbit(data.uranus.a, data.uranus.e, data.uranus.w, degToRad(40));
 var neptuneOrbit = new Orbit(data.neptune.a, data.neptune.e, data.neptune.w, degToRad(90));
 var plutoOrbit = new Orbit(data.pluto.a, data.pluto.e, data.pluto.w, degToRad(40));
 
@@ -249,16 +293,17 @@ function render(univScale) {
   //orbitsCtx.fillRect(0, 0, width, height);
 
   // orbits
-  mercuryOrbit.drawOrbit(orbitsCtx, univScale);
-  venusOrbit.drawOrbit(orbitsCtx, univScale);
-  earthOrbit.drawOrbit(orbitsCtx, univScale);
-  marsOrbit.drawOrbit(orbitsCtx, univScale);
-  jupiterOrbit.drawOrbit(orbitsCtx, univScale);
-  saturnOrbit.drawOrbit(orbitsCtx, univScale);
-  uranusOrbit.drawOrbit(orbitsCtx, univScale);
-  neptuneOrbit.drawOrbit(orbitsCtx, univScale);
-  plutoOrbit.drawOrbit(orbitsCtx, univScale);
-  halleyOrbit.drawOrbit(orbitsCtx, univScale);
+  mercuryOrbit.drawOrbit(orbitsCtx, univScale, highlights[0]);
+  venusOrbit.drawOrbit(orbitsCtx, univScale, highlights[1]);
+  earthOrbit.drawOrbit(orbitsCtx, univScale, highlights[2]);
+  marsOrbit.drawOrbit(orbitsCtx, univScale, highlights[3]);
+  jupiterOrbit.drawOrbit(orbitsCtx, univScale, highlights[4]);
+  saturnOrbit.drawOrbit(orbitsCtx, univScale, highlights[5]);
+  uranusOrbit.drawOrbit(orbitsCtx, univScale, highlights[6]);
+  neptuneOrbit.drawOrbit(orbitsCtx, univScale, highlights[7]);
+  plutoOrbit.drawOrbit(orbitsCtx, univScale, highlights[8]);
+  halleyOrbit.drawOrbit(orbitsCtx, univScale, highlights[9]);
+
 
   // planets
   // make sure the small planets stay visible
@@ -282,25 +327,37 @@ function render(univScale) {
 
   halleyOrbit.drawOrbiter(1, time, planetsCtx, univScale, null); // almost always out of the inner planet scene, so just make it have constant radius
 
+
   // satellites, since we need getPlanetLocation updated after everything's been drawn already
   var earthLocation = earthOrbit.getPlanetLocation();
-  moonOrbit.drawOrbit(orbitsCtx, univScale);
+  moonOrbit.drawOrbit(orbitsCtx, univScale, highlights[10]);
+
   if (univScale < 0.5)
     moonOrbit.drawOrbiter(1, time, planetsCtx, univScale, moonCanvas);
   else
     moonOrbit.drawOrbiter(3, time, planetsCtx, univScale, moonCanvas);
 
   // asteroids have no orbits drawn, just dots
-  for (var i = 0; i<asteroids.length; i++)
-    asteroids[i].drawOrbiter(1, time, planetsCtx, univScale, null, "#999999");
+  // optimize by not drawing the asteroids that aren't showing
+  for (var i = 0; i<asteroids.length; i++) {
+    // call this first, so we can have a location to get
+    asteroids[i].getDrawingLocation(1, time, planetsCtx, univScale, null);
+
+    var loc = asteroids[i].getPlanetLocation();
+    if (isOnScreen(loc[0], loc[1], univScale, null))
+      asteroids[i].drawOrbiter(1, time, planetsCtx, univScale, null, "#999999");
+  }
 
   // sun last so that the shadows don't make other things look strange
-  orbitsCtx.shadowColor = "#ffea75";
   orbitsCtx.shadowOffsetX = 0;
   orbitsCtx.shadowOffsetY = 0;
-  orbitsCtx.shadowBlur = 30*univScale;
-  drawDot(polarToCanvas(0, 0), 15*univScale, orbitsCtx, null, "#ffd900"); 
-  drawDot(polarToCanvas(0, 0), 15*univScale, orbitsCtx, sunCanvas);
+  orbitsCtx.shadowColor = "#ffea75";
+  orbitsCtx.shadowBlur = 40*univScale;
+  drawDot(polarToCanvas(0, 0), 20*univScale, orbitsCtx, null, "#ffd900"); // outer corona
+  orbitsCtx.shadowColor = "#ff774a";
+  orbitsCtx.shadowBlur = 20*univScale;
+  drawDot(polarToCanvas(0, 0), 20*univScale, orbitsCtx, null, "#ff5900"); // inner corona
+  drawDot(polarToCanvas(0, 0), 20*univScale, orbitsCtx, sunCanvas);
 
   // update year counter if Earth has completed an orbit
   updateYear();
@@ -426,6 +483,16 @@ function polarToCanvas(r, theta, scale, origin) { // -> [float, float]
   return [r, theta];
 }*/
 
+function isOnScreen(r, t, scale, origin) {
+  var renderedX = polarToCanvas(r, t, scale, origin)[0];
+  var renderedY = polarToCanvas(r, t, scale, origin)[1];
+  // the 3 is a buffer so small things don't look strange at the edges
+  if (renderedX < 0-3 || renderedX > width+3 || renderedY < 0-3 || renderedY > height+3)
+    return false;
+  else
+    return true;
+}
+
 function shiftOrigin(newOrigin, r, t) { // -> [r', theta']
   // with respect to the new origin in polar coordinates
   var r0 = newOrigin[0];
@@ -464,7 +531,7 @@ function drawDot(center, radius, layer, imageCanvas, color) {
   }
 }
 
-function drawPolarEllipse(a_, e, w, scale, layer, origin, color) {
+function drawPolarEllipse(a_, e, w, scale, layer, origin, isHighlighted, color) {
   // converts the html5 usage of circles to polar ellipses with the given parameters
   // origin is in polar coordinates; location of focus
   
@@ -472,7 +539,10 @@ function drawPolarEllipse(a_, e, w, scale, layer, origin, color) {
   var b = a*Math.sqrt(1-e*e); // semiminor axis
   var c = a*e; // distance from center to focus
 
-  layer.strokeStyle = (!color) ? "#777777" : color;
+  if (isHighlighted)
+    layer.strokeStyle = "#aaaaaa";
+  else
+    layer.strokeStyle = (!color) ? "#777777" : color;
 
   if (!origin)
     var origin = [0,0];
@@ -488,8 +558,9 @@ function drawPolarEllipse(a_, e, w, scale, layer, origin, color) {
   layer.rotate(-w);
   // set the proper scale w.r.t. this new origin
   layer.scale(1, b/a);
-  // dashed lines
-  layer.setLineDash([3,6]);
+  // dashed lines normally
+  if (!isHighlighted)
+    layer.setLineDash([3,6]);
 
   // draw the "circle"
   layer.beginPath();
@@ -518,9 +589,12 @@ function Orbit(a, e, w, angularOffset, parentObject) {
   // eccentricity = c/a, a^2-b^2=c^2
   var b = a*Math.sqrt(1-e*e); // semiminor axis
   var c = a*e; // distance from center to focus
+  // Kepler 3: P^2=a^3 where P in yr, a in AU (r units)
+  var period = Math.pow(a, 1.5);
 
   // these properties are for the planet in the orbit
   var phiAngularOffset = getPhi(angularOffset);
+
 
   var r0 = a * (1-e*e) / (1+e*Math.cos(-w));
   var t0 = angularOffset;
@@ -584,7 +658,7 @@ function Orbit(a, e, w, angularOffset, parentObject) {
     return [r1, theta1+w];
   }
 
-  this.drawOrbit = function(layer, scale) {
+  this.drawOrbit = function(layer, scale, isHighlighted) {
     // draws an orbit in using origin as polar(0,0)
 
     if (!nested)
@@ -592,7 +666,7 @@ function Orbit(a, e, w, angularOffset, parentObject) {
     else
       var origin = parentObject.getPlanetLocation();
 
-    drawPolarEllipse(a, e, w, scale, layer, origin);
+    drawPolarEllipse(a, e, w, scale, layer, origin, isHighlighted);
 
     // put dots on the actual orbit for debugging
     /*Kepler 1: orbits are ellipses with central mass at focus
@@ -604,8 +678,7 @@ function Orbit(a, e, w, angularOffset, parentObject) {
 
   }
 
-  this.drawOrbiter = function(planetRadius, time, layer, scale, imageCanvas, color) { // color optional
-    // orbiting object drawn as a dot of some radius (px), after some time (ms), onto some layer
+  this.getDrawingLocation = function(planetRadius, time, layer, scale, imageCanvas) { // for getting the location of the point we are about to draw
 
     if (!nested)
       var origin = [0,0];
@@ -613,9 +686,6 @@ function Orbit(a, e, w, angularOffset, parentObject) {
       var origin = parentObject.getPlanetLocation();
       origin[0] = 0; // not really sure why this line is necessary...
     }
-
-    // Kepler 3: P^2=a^3 where P in yr, a in AU (r units)
-    var period = Math.pow(a, 1.5);
 
     // now, as in old drawOrbit, loop through the angle at the other focus phi from 0 to 2pi at constant rate
     
@@ -635,18 +705,15 @@ function Orbit(a, e, w, angularOffset, parentObject) {
     this.r = trueR;
     this.theta = trueTheta;
     this.location = polarToCanvas(trueR, trueTheta, scale, origin); // for convenience, esp with satellites
+  }
 
+  this.drawOrbiter = function(planetRadius, time, layer, scale, imageCanvas, color) {
+    // orbiting object drawn as a dot of some radius (px), after some time (ms), onto some layer
+    // color optional
+
+    this.getDrawingLocation(planetRadius, time, layer, scale, imageCanvas);
     drawDot(this.location, planetRadius, layer, imageCanvas, color);
   }
 
   this.getPlanetLocation = function() { return [this.r, this.theta]; }
 }
-
-
-// info panel control
-$("#info").click(function() {
-  if ($("#infoPanel").css("display") === "none")
-    $("#infoPanel").fadeIn(400);
-  else
-    $("#infoPanel").fadeOut(400);
-})
