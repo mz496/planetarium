@@ -154,6 +154,8 @@ window.requestAnimFrame = (function(){
   return  window.requestAnimationFrame       ||
           window.webkitRequestAnimationFrame ||
           window.mozRequestAnimationFrame    ||
+          window.oRequestAnimationFrame      ||
+          window.msRequestAnimationFrame     ||
           function( callback ){ // fallback
             window.setTimeout(callback, 1000 / 60);
           };
@@ -383,9 +385,23 @@ $("#toggleZoom").click(function(){
 });
 
 var dt = 0;
+var lastRun;
 
 // controls animation
 function animLoop() {
+  // fps counting
+  if (!lastRun) { // if first time running
+    lastRun = new Date().getTime();
+  }
+  else {
+    var delta = new Date().getTime() - lastRun; // ms
+    lastRun = new Date().getTime();
+    fps = 1000/delta;
+    if (time%1000 < delta) // so the update only occurs about once a second, just after the new second starts
+    $("#fps").html("FPS: " + Math.floor(fps));
+    console.log(time);
+  }
+
   requestAnimFrame(animLoop);
 
   // measured every frame, so we update universalScale at each tick when zooming in/out
