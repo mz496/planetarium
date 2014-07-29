@@ -42,10 +42,20 @@
         font-family: 'Open Sans', sans-serif;
         font-size: 13px;
       }
+      ol {
+        text-align: left;
+        font-family: 'Open Sans', sans-serif;
+        font-size: 13px;
+      }
+      hr {
+        border: none;
+        border-bottom: 1px solid #999999;
+      }
+      a:visited { color: rgb(51, 51, 51); }
 
       .button {
         position: relative;
-        opacity: 0.5;
+        opacity: 0.6;
         margin: 10px;
         padding: 10px;
         display: inline-block;
@@ -74,14 +84,14 @@
 
       #infoPanel {
         color: black;
-        opacity: 0.5;
+        opacity: 0.6;
         margin: 10px;
         padding: 10px;
         display: none;
         background-color: #DBD2FA;
         border-radius: 6px;
 
-        width: 220px;
+        width: 270px;
         height: calc(100% - 100px);
 
         right: 0;
@@ -155,7 +165,43 @@
         <h2><span id="halley">Halley's Comet:</span></h2>
         <p>12 min 33 sec (75.3 years)<br />
         The next approach to the sun will occur in 2061.</p>
+
         <hr>
+        <hr>
+
+        <h1>Yay astronomy!</h1>
+        <hr>
+
+
+        <h2>Kepler's Laws of Planetary Motion</h2>
+        <ol>
+          <li><strong>The orbit of a planet is an ellipse with the Sun at one of the two foci.</strong></li>
+
+          <p>An ellipse has an eccentricity <img src="images/math/e.png" style="margin-bottom: -1px" /> that satisfies the inequality <img src="images/math/inequality.png" style="margin-bottom: -5px" />. Increasing eccentricity means a less circular and more oblong orbit: Halley's Comet has an eccentricity of <img src="images/math/0967.png" style="margin-bottom: -1px" /> while <strong>Venus has the smallest eccentricity of all planets</strong>, a mere <img src="images/math/0007.png" style="margin-bottom: -1px" />.</p>
+          
+          <li><strong>A line segment joining a planet and the Sun sweeps out equal areas during equal intervals of time.</strong></li>
+
+          <p>This effect is most pronounced when <strong>Mercury, the planet whose orbit is most eccentric</strong> <img src="images/math/e0206.png" style="margin-bottom: -5px" />, moves fastest when it's closest to the Sun and slowest when it's farthest from the Sun. Those near and far points are called <strong>perihelion/periapsis</strong> and <strong>aphelion/apoapsis</strong> respectively.</p>
+          <p style="font-size: 10px;">(I used an approximation here, which is accurate enough...)</p>
+
+          <li><strong>The square of the orbital period of a planet is proportional to the cube of the semi-major axis of its orbit.</strong></li>
+
+          <p>If the period is measured in Earth years, and the semi-major axis is measured in Astronomical Units (AU), then the ratio of proportionality is 1 <img src="images/math/kepler3.png" style="margin-bottom: -5px" />. The math works out pretty nicely for Earth.</p>
+        </ol>
+
+        <h2>Other relevant facts</h2>
+        <ol>
+          <li>It might look like objects are colliding or are extremely prone to collision, but they're almost certainly not. This is a 2D representation of objects moving in 3D space, so the objects are probably moving in different planes. Of the <strong>six orbital elements</strong> that uniquely determine an object's orbit in 3D <img src="images/math/orbitalelements.png" style="margin-bottom: -5px" />, we are forced to ignore two of them <img src="images/math/orbitalelements2.png" style="margin-bottom: -5px" /> that aren't representable in 2D.</li>
+
+          <li>Space is too big. <strong>Light takes over eight minutes of real time to travel those few centimeters (or less) on your screen from the Sun to Earth.</strong> Therefore, the size and distance scales are highly misrepresented just so that planets/bodies can be visible. The time scale is correct, however.</li>
+
+          <li>The length of a <strong>sidereal month</strong> for the Moon (27.3 days) was used instead of an average <strong>synodic month</strong> (29.5 days) because of the fixed reference frame. In short, the synodic month is what we observe on Earth; e.g. the time between full moons, which is when the Moon returns to the same place relative to the Earth and Sun. The sidereal month is a little longer because it's the timespan for when the Moon returns to the same location in a fixed reference frame; i.e. the stars. (<a href="http://spiff.rit.edu/classes/phys301/lectures/sunmoon/synodic_moon.png">This image</a> is a good visual aid. In both the top and bottom parts, the Moon appears to be in the same location for an observer on Earth. But relative to the stars, it'd have to move extra distance to reach that position, illustrated by the red arrow.)</li>
+
+          <li>Long live Pluto, which was voted off the island in 2006. It's the second-most-massive known dwarf planet, after Eris. <a href="http://www.space.com/18584-dwarf-planets-solar-system-infographic.html">(More information here.)</a> <strong>Ceres</strong> is the fifth-most-massive dwarf planet and the only one in the inner solar system. It's also the largest object in the asteroid belt, containing one third of the belt's total mass. The unmanned <i>Dawn</i> spacecraft is scheduled to reach Ceres in early 2015. I hope it does some serious tests on the surface chemistry. Every day is a learning day.</li>
+        </ol>
+
+        <hr>
+
         <p>Matthew Zhu</p>
         <p id="fps" style="font-size: 10px;"></p>
       </div>
