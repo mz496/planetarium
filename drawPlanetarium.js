@@ -399,7 +399,7 @@ function animLoop() {
     fps = 1000/delta;
     if (time%1000 < delta) // so the update only occurs about once a second, just after the new second starts
     $("#fps").html("FPS: " + Math.floor(fps));
-    console.log(time);
+    //console.log(time);
   }
 
   requestAnimFrame(animLoop);

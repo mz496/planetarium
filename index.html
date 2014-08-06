@@ -26,7 +26,8 @@
         left: 0;
         top: 0;
       }
-      div {position: absolute;}
+      div { position: absolute;
+        overflow: hidden; }
       /*img {position: absolute;}*/
       h1 {
         font-family: 'Montserrat', sans-serif;
@@ -51,6 +52,7 @@
         border: none;
         border-bottom: 1px solid #999999;
       }
+      a { color: rgb(51, 51, 51); }
       a:visited { color: rgb(51, 51, 51); }
 
       .button {
@@ -116,7 +118,7 @@
 
   <body>
     <div id="bg" style="z-index: 0;">
-      <img id="bgImg" src="images/bg.jpg" />
+      <img id="bgImg" src="images/bg2.jpg" />
     </div>
 
     <canvas id="orbits" style="z-index: 1;">Sorry, your browser does not support HTML5 canvas. Please try a different browser.</canvas>
@@ -195,7 +197,7 @@
 
           <li>Space is too big. <strong>Light takes over eight minutes of real time to travel those few centimeters (or less) on your screen from the Sun to Earth.</strong> Therefore, the size and distance scales are highly misrepresented just so that planets/bodies can be visible. The time scale is correct, however.</li>
 
-          <li>The length of a <strong>sidereal month</strong> for the Moon (27.3 days) was used instead of an average <strong>synodic month</strong> (29.5 days) because of the fixed reference frame. In short, the synodic month is what we observe on Earth; e.g. the time between full moons, which is when the Moon returns to the same place relative to the Earth and Sun. The sidereal month is a little longer because it's the timespan for when the Moon returns to the same location in a fixed reference frame; i.e. the stars. (<a href="http://spiff.rit.edu/classes/phys301/lectures/sunmoon/synodic_moon.png">This image</a> is a good visual aid. In both the top and bottom parts, the Moon appears to be in the same location for an observer on Earth. But relative to the stars, it'd have to move extra distance to reach that position, illustrated by the red arrow.)</li>
+          <li>The length of a <strong>sidereal month</strong> for the Moon (27.3 days) was used instead of an average <strong>synodic month</strong> (29.5 days) because of the fixed reference frame. In short, the sidereal month is the length of time it would take for the Moon to orbit Earth in an external reference frame. The synodic month is relative to Earth when the Moon returns to the same place relative to the Earth and Sun, e.g. the time between new moons. This is a little longer than a sidereal month because an Earth observer's reference frame changes as Earth itself orbits the Sun. (<a href="http://spiff.rit.edu/classes/phys301/lectures/sunmoon/synodic_moon.png">This image</a> is a good visual aid. In both the top and bottom parts, the Moon appears to be in the same location for an observer on Earth. But relative to the stars, it'd have to move extra distance to reach that position, illustrated by the red arrow.)</li>
 
           <li>Long live Pluto, which was voted off the island in 2006. It's the second-most-massive known dwarf planet, after Eris. <a href="http://www.space.com/18584-dwarf-planets-solar-system-infographic.html">(More information here.)</a> <strong>Ceres</strong> is the fifth-most-massive dwarf planet and the only one in the inner solar system. It's also the largest object in the asteroid belt, containing one third of the belt's total mass. The unmanned <i>Dawn</i> spacecraft is scheduled to reach Ceres in early 2015. I hope it does some serious tests on the surface chemistry. Every day is a learning day.</li>
         </ol>
