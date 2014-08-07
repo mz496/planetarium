@@ -113,10 +113,23 @@
         height: 100%;
         background-color: black;
       }
+      #loading {
+        width: 100%;
+        height: 100%;
+        font-size: 48px;
+        opacity: 0.3;
+        text-align: center;
+        top: 25%;
+      }
     </style>
   </head>
 
   <body>
+
+    <div id="cover" style="z-index: 100;">
+      <div id="loading"><h1>Loading</h1></div>
+    </div>
+
     <div id="bg" style="z-index: 0;">
       <img id="bgImg" src="images/bg2.jpg" />
     </div>
@@ -137,6 +150,12 @@
           <img id="zoomOut" src="images/info.png" />
         </a>
 
+      </div>
+
+      <div id="year" style="text-align: center;">
+        <h1 style="margin: 0; font-size: 18px;">Earth<br />Year</h1>
+        <hr style="margin: 3px;">
+        <p style="margin: -5px 0 -10px 0; font-weight: bold; font-size: 36px;"><span id="yearNum"></span></p>
       </div>
 
       <div id="infoPanel" style="text-align: center; overflow: auto;">
@@ -207,15 +226,7 @@
         <p>Matthew Zhu</p>
         <p id="fps" style="font-size: 10px;"></p>
       </div>
-
-      <div id="year" style="text-align: center;">
-        <h1 style="margin: 0; font-size: 18px;">Earth<br />Year</h1>
-        <hr style="margin: 3px;">
-        <p style="margin: -5px 0 -10px 0; font-weight: bold; font-size: 36px;"><span id="yearNum"></span></p>
-      </div>
     </div>
-
-    <div id="cover" style="z-index: 100;"></div>
 
     <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
     <script src="drawPlanetarium.js"></script>
